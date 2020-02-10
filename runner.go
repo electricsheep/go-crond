@@ -27,10 +27,10 @@ func NewRunner() *Runner {
 func (r *Runner) Add(cronjob CrontabEntry) error {
 	cronSpec := cronjob.Spec
 	if !strings.HasPrefix(cronjob.Spec, "@") {
-		cronSpec = fmt.Sprintf("0 %s", cronjob.Spec)
+		cronSpec = fmt.Sprintf("%s", cronjob.Spec)
 	}
 
-	err := r.cron.AddFunc(cronSpec, r.cmdFunc(cronjob, func(execCmd *exec.Cmd) bool {
+	_, err := r.cron.AddFunc(cronSpec, r.cmdFunc(cronjob, func(execCmd *exec.Cmd) bool {
 		// before exec callback
 		LoggerInfo.CronjobExec(cronjob)
 		return true
@@ -50,10 +50,10 @@ func (r *Runner) AddWithUser(cronjob CrontabEntry) error {
 
 	cronSpec := cronjob.Spec
 	if !strings.HasPrefix(cronjob.Spec, "@") {
-		cronSpec = fmt.Sprintf("0 %s", cronjob.Spec)
+		cronSpec = fmt.Sprintf("%s", cronjob.Spec)
 	}
 
-	err := r.cron.AddFunc(cronSpec, r.cmdFunc(cronjob, func(execCmd *exec.Cmd) bool {
+	_, err := r.cron.AddFunc(cronSpec, r.cmdFunc(cronjob, func(execCmd *exec.Cmd) bool {
 		// before exec callback
 		LoggerInfo.CronjobExec(cronjob)
 
