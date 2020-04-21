@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/robfig/cron"
 	"os"
 	"os/exec"
 	"os/user"
@@ -10,6 +9,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/robfig/cron"
 )
 
 type Runner struct {
@@ -37,7 +38,7 @@ func (r *Runner) Add(cronjob CrontabEntry) error {
 	}))
 
 	if err != nil {
-		LoggerError.Printf("Failed add cron job spec:%v cmd:%v err:%v", cronjob.Spec, cronjob.Command, err)
+		LoggerError.Log(fmt.Sprintf("Failed add cron job spec:%v cmd:%v err:%v", cronjob.Spec, cronjob.Command, err))
 	} else {
 		LoggerInfo.CronjobAdd(cronjob)
 	}
@@ -60,21 +61,21 @@ func (r *Runner) AddWithUser(cronjob CrontabEntry) error {
 		// lookup username
 		u, err := user.Lookup(cronjob.User)
 		if err != nil {
-			LoggerError.Printf("user lookup failed: %v", err)
+			LoggerError.Log(fmt.Sprintf("user lookup failed: %v", err))
 			return false
 		}
 
 		// convert userid to int
 		userId, err := strconv.ParseUint(u.Uid, 10, 32)
 		if err != nil {
-			LoggerError.Printf("Cannot convert user to id:%v", err)
+			LoggerError.Log(fmt.Sprintf("Cannot convert user to id:%v", err))
 			return false
 		}
 
 		// convert groupid to int
 		groupId, err := strconv.ParseUint(u.Gid, 10, 32)
 		if err != nil {
-			LoggerError.Printf("Cannot convert group to id:%v", err)
+			LoggerError.Log(fmt.Sprintf("Cannot convert group to id:%v", err))
 			return false
 		}
 
@@ -85,9 +86,9 @@ func (r *Runner) AddWithUser(cronjob CrontabEntry) error {
 	}))
 
 	if err != nil {
-		LoggerError.Printf("Failed add cron job %v; Error:%v", LoggerError.CronjobToString(cronjob), err)
+		LoggerError.Log(fmt.Sprintf("Failed add cron job %v; Error:%v", LoggerError.CronjobToString(cronjob), err))
 	} else {
-		LoggerInfo.Printf("Add cron job %v", LoggerError.CronjobToString(cronjob))
+		LoggerInfo.Log(fmt.Sprintf("Add cron job %v", LoggerError.CronjobToString(cronjob)))
 	}
 
 	return err
@@ -100,14 +101,14 @@ func (r *Runner) Len() int {
 
 // Start runner
 func (r *Runner) Start() {
-	LoggerInfo.Printf("Start runner with %d jobs\n", r.Len())
+	LoggerInfo.Log(fmt.Sprintf("Start runner with %d jobs\n", r.Len()))
 	r.cron.Start()
 }
 
 // Stop runner
 func (r *Runner) Stop() {
 	r.cron.Stop()
-	LoggerInfo.Println("Stop runner")
+	LoggerInfo.Log(fmt.Sprintln("Stop runner"))
 }
 
 // Execute crontab command

@@ -14,12 +14,13 @@ var (
 )
 
 func initLogger() {
-	LoggerInfo = CronLogger{log.New(os.Stdout, LogPrefix, 0)}
-	LoggerError = CronLogger{log.New(os.Stderr, LogPrefix, 0)}
+	LoggerInfo = CronLogger{log.New(os.Stdout, "", 0), "Information"}
+	LoggerError = CronLogger{log.New(os.Stderr, "", 0), "Error"}
 }
 
 type CronLogger struct {
 	*log.Logger
+	level string
 }
 
 func (CronLogger CronLogger) CronjobToString(cronjob CrontabEntry) string {
@@ -37,28 +38,28 @@ func (CronLogger CronLogger) CronjobToString(cronjob CrontabEntry) string {
 }
 
 func (CronLogger CronLogger) CronjobAdd(cronjob CrontabEntry) {
-	CronLogger.CronjobExecMessage("Information", fmt.Sprintf("Cronjob added: %v", CronLogger.CronjobToString(cronjob)))
+	CronLogger.Log(fmt.Sprintf("Cronjob added: %v", CronLogger.CronjobToString(cronjob)))
 }
 
 func (CronLogger CronLogger) CronjobExec(cronjob CrontabEntry) {
 	if opts.Verbose {
-		CronLogger.CronjobExecMessage("Information", fmt.Sprintf("Cronjob executing: %v", CronLogger.CronjobToString(cronjob)))
+		CronLogger.Log(fmt.Sprintf("Cronjob executing: %v", CronLogger.CronjobToString(cronjob)))
 	}
 }
 
 func (CronLogger CronLogger) CronjobExecFailed(cronjob CrontabEntry, output string, err error, elapsed time.Duration) {
 	CronLogger.Printf("%v\n", output)
-	CronLogger.CronjobExecMessage("Error", fmt.Sprintf("Cronjob failed: cmd:%v err:%v time:%s", cronjob.Command, err, elapsed))
+	CronLogger.Log(fmt.Sprintf("Cronjob failed: cmd:%v err:%v time:%s", cronjob.Command, err, elapsed))
 }
 
 func (CronLogger CronLogger) CronjobExecSuccess(cronjob CrontabEntry, output string, err error, elapsed time.Duration) {
 	if opts.Verbose {
 		CronLogger.Printf("%v\n", output)
-		CronLogger.CronjobExecMessage("Information", fmt.Sprintf("Cronjob succeeded: cmd:%v err:%v time:%s", cronjob.Command, err, elapsed))
+		CronLogger.Log(fmt.Sprintf("Cronjob succeeded: cmd:%v err:%v time:%s", cronjob.Command, err, elapsed))
 	}
 }
 
-func (CronLogger CronLogger) CronjobExecMessage(level string, message string) {
+func (CronLogger CronLogger) Log(message string) {
 	var currentTime string = time.Now().Format(time.RFC3339)
-	CronLogger.Printf("{\"Timestamp\": \"%v\", \"Level\": \"%v\", \"Message\": \"%v\"}\n", currentTime, level, message)
+	CronLogger.Printf("{\"Timestamp\": \"%v\", \"Level\": \"%v\", \"Message\": \"%v\"}\n", currentTime, CronLogger.level, message)
 }
