@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
-	"strings"
 	"os"
+	"strings"
 	"time"
 )
 
 var (
-	LoggerInfo CronLogger
+	LoggerInfo  CronLogger
 	LoggerError CronLogger
 )
 
@@ -20,12 +20,6 @@ func initLogger() {
 
 type CronLogger struct {
 	*log.Logger
-}
-
-func (CronLogger CronLogger) Verbose(message string) {
-	if opts.Verbose {
-		CronLogger.Println(message)
-	}
 }
 
 func (CronLogger CronLogger) CronjobToString(cronjob CrontabEntry) string {
@@ -43,21 +37,28 @@ func (CronLogger CronLogger) CronjobToString(cronjob CrontabEntry) string {
 }
 
 func (CronLogger CronLogger) CronjobAdd(cronjob CrontabEntry) {
-	CronLogger.Printf("add: %v\n", CronLogger.CronjobToString(cronjob))
+	cronjobExecMessage("Information", fmt.Printf("Cronjob added: %v", CronLogger.CronjobToString(cronjob))
 }
 
 func (CronLogger CronLogger) CronjobExec(cronjob CrontabEntry) {
 	if opts.Verbose {
-		CronLogger.Printf("exec: %v\n", CronLogger.CronjobToString(cronjob))
+		cronjobExecMessage("Information", fmt.Printf("Cronjob executing: %v", CronLogger.CronjobToString(cronjob))
 	}
 }
 
 func (CronLogger CronLogger) CronjobExecFailed(cronjob CrontabEntry, output string, err error, elapsed time.Duration) {
-	CronLogger.Printf("failed cronjob: cmd:%v out:%v err:%v time:%s\n", cronjob.Command, output, err, elapsed)
+	CronLogger.Printf("%v\n", output)
+	cronjobExecResult("Error", fmt.Printf("Cronjob failed: cmd:%v err:%v time:%s", cronjob.Command, err, elapsed))
 }
 
 func (CronLogger CronLogger) CronjobExecSuccess(cronjob CrontabEntry, output string, err error, elapsed time.Duration) {
 	if opts.Verbose {
-		CronLogger.Printf("ok: cronjob: cmd:%v out:%v err:%v time:%s\n", cronjob.Command, output, err, elapsed)
+		CronLogger.Printf("%v\n", output)
+		cronjobExecResult("Information", fmt.Printf("Cronjob succeeded: cmd:%v err:%v time:%s", cronjob.Command, err, elapsed))
 	}
+}
+
+func (CronLogger CronLogger) cronjobExecMessage(level string, message string) {
+	var currentTime string = time.Now().Format(time.RFC3339)
+	CronLogger.Printf("{\"Timestamp\": \"%v\", \"Level\": \"%v\", \"Message\": \"%v\"}\n", currentTime, level, message)
 }
