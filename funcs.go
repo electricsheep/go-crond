@@ -11,12 +11,12 @@ import (
 func fileGetAbsolutePath(path string) (string, os.FileInfo) {
 	ret, err := filepath.Abs(path)
 	if err != nil {
-		LoggerError.Fatalf("Invalid file: %v", err)
+		LoggerError.Log(fmt.Sprintf("Invalid file: %v", err))
 	}
 
 	f, err := os.Lstat(ret)
 	if err != nil {
-		LoggerError.Fatalf("File stats failed: %v", err)
+		LoggerError.Log(fmt.Sprintf("File stats failed: %v", err))
 	}
 
 	return ret, f
@@ -79,10 +79,10 @@ func checkIfFileIsValid(f os.FileInfo, path string) bool {
 		if f.Mode().Perm()&0022 == 0 {
 			return true
 		} else {
-			LoggerInfo.Printf("Ignoring file with wrong modes (not xx22) %s\n", path)
+			LoggerInfo.Log(fmt.Sprintf("Ignoring file with wrong modes (not xx22) %s\n", path))
 		}
 	} else {
-		LoggerInfo.Printf("Ignoring non regular file %s\n", path)
+		LoggerInfo.Log(fmt.Sprintf("Ignoring non regular file %s\n", path))
 	}
 
 	return false

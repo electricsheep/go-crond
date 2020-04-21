@@ -2,19 +2,20 @@ package main
 
 import (
 	"fmt"
-	flags "github.com/jessevdk/go-flags"
 	"os"
 	"os/signal"
 	"os/user"
 	"path/filepath"
 	"strings"
 	"syscall"
+
+	flags "github.com/jessevdk/go-flags"
 )
 
 const (
 	Name      = "go-crond"
 	Author    = "webdevops.io"
-	Version   = "0.6.3"
+	Version   = "0.6.4"
 	LogPrefix = "go-crond: "
 )
 
@@ -79,9 +80,9 @@ func initArgParser() []string {
 // Log error object as message
 func logFatalErrorAndExit(err error, exitCode int) {
 	if err != nil {
-		LoggerError.Fatalf("ERROR: %s\n", err)
+		LoggerError.Log(fmt.Sprintf("ERROR: %s", err))
 	} else {
-		LoggerError.Fatalln("ERROR: Unknown fatal error")
+		LoggerError.Log(fmt.Sprintf("ERROR: Unknown fatal error"))
 	}
 	os.Exit(exitCode)
 }
@@ -113,7 +114,7 @@ func findExecutabesInPathes(pathlist []string, callback func(os.FileInfo, string
 		if f.Mode().IsRegular() && (f.Mode().Perm()&0100 != 0) {
 			callback(f, path)
 		} else {
-			LoggerInfo.Printf("Ignoring non exectuable file %s\n", path)
+			LoggerInfo.Log(fmt.Sprintf("Ignoring non exectuable file %s", path))
 		}
 	})
 }
@@ -172,7 +173,7 @@ func parseCrontab(path string, username string) []CrontabEntry {
 
 	file, err := os.Open(path)
 	if err != nil {
-		LoggerError.Fatalf("crontab path: %v err:%v", path, err)
+		LoggerError.Log(fmt.Sprintf("crontab path: %v err:%v", path, err))
 	}
 
 	if username == CRONTAB_TYPE_SYSTEM {
@@ -182,7 +183,7 @@ func parseCrontab(path string, username string) []CrontabEntry {
 	}
 
 	if err != nil {
-		LoggerError.Fatalf("Parser read err: %v", err)
+		LoggerError.Log(fmt.Sprintf("Parser read err: %v", err))
 	}
 
 	crontabEntries := parser.Parse()
@@ -194,7 +195,7 @@ func collectCrontabs(args []string) []CrontabEntry {
 	var ret []CrontabEntry
 
 	// include system default crontab
-	if ! opts.NoAuto {
+	if !opts.NoAuto {
 		ret = append(ret, includeSystemDefaults()...)
 	}
 
@@ -229,7 +230,7 @@ func collectCrontabs(args []string) []CrontabEntry {
 
 				ret = append(ret, includeRunPartsDirectory(cronSpec, cronPath)...)
 			} else {
-				LoggerError.Printf("Ignoring --run-parts because of missing time spec: %s\n", runPart)
+				LoggerError.Log(fmt.Sprintf("Ignoring --run-parts because of missing time spec: %s\n", runPart))
 			}
 		}
 	}
@@ -276,7 +277,7 @@ func includeSystemDefaults() []CrontabEntry {
 	// Alpine
 	// ----------------------
 	if checkIfFileExistsAndOwnedByRoot("/etc/alpine-release") {
-		LoggerInfo.Println(" --> detected Alpine family, using distribution defaults")
+		LoggerInfo.Log(" --> detected Alpine family, using distribution defaults")
 
 		if checkIfDirectoryExists("/etc/crontabs") {
 			ret = append(ret, includePathForCrontabs("/etc/crontabs", opts.DefaultUser)...)
@@ -289,7 +290,7 @@ func includeSystemDefaults() []CrontabEntry {
 	// RedHat
 	// ----------------------
 	if checkIfFileExistsAndOwnedByRoot("/etc/redhat-release") {
-		LoggerInfo.Println(" --> detected RedHat family, using distribution defaults")
+		LoggerInfo.Log(" --> detected RedHat family, using distribution defaults")
 
 		if checkIfFileExists("/etc/crontabs") {
 			ret = append(ret, includePathForCrontabs("/etc/crontabs", CRONTAB_TYPE_SYSTEM)...)
@@ -302,7 +303,7 @@ func includeSystemDefaults() []CrontabEntry {
 	// SuSE
 	// ----------------------
 	if checkIfFileExistsAndOwnedByRoot("/etc/SuSE-release") {
-		LoggerInfo.Println(" --> detected SuSE family, using distribution defaults")
+		LoggerInfo.Log(" --> detected SuSE family, using distribution defaults")
 
 		if checkIfFileExists("/etc/crontab") {
 			ret = append(ret, includePathForCrontabs("/etc/crontab", CRONTAB_TYPE_SYSTEM)...)
@@ -315,7 +316,7 @@ func includeSystemDefaults() []CrontabEntry {
 	// Debian
 	// ----------------------
 	if checkIfFileExistsAndOwnedByRoot("/etc/debian_version") {
-		LoggerInfo.Println(" --> detected Debian family, using distribution defaults")
+		LoggerInfo.Log(" --> detected Debian family, using distribution defaults")
 
 		if checkIfFileExists("/etc/crontab") {
 			ret = append(ret, includePathForCrontabs("/etc/crontab", CRONTAB_TYPE_SYSTEM)...)
@@ -327,7 +328,7 @@ func includeSystemDefaults() []CrontabEntry {
 	// ----------------------
 	// General
 	// ----------------------
-	if ! systemDetected {
+	if !systemDetected {
 		if checkIfFileExists("/etc/crontab") {
 			ret = append(ret, includePathForCrontabs("/etc/crontab", CRONTAB_TYPE_SYSTEM)...)
 		}
@@ -367,17 +368,17 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGHUP)
 
-	LoggerInfo.Printf("Starting %s version %s", Name, Version)
+	LoggerInfo.Log(fmt.Sprintf("Starting %s version %s", Name, Version))
 
 	// check if user switching is possible (have to be root)
 	opts.EnableUserSwitching = true
 	currentUser, err := user.Current()
 	if err != nil || currentUser.Uid != "0" {
 		if opts.AllowUnprivileged {
-			LoggerError.Println("WARNING: go-crond is NOT running as root, disabling user switching")
+			LoggerError.Log(fmt.Sprintf("WARNING: go-crond is NOT running as root, disabling user switching"))
 			opts.EnableUserSwitching = false
 		} else {
-			LoggerError.Println("ERROR: go-crond is NOT running as root, add option --allow-unprivileged if this is ok")
+			LoggerError.Log(fmt.Sprintf("ERROR: go-crond is NOT running as root, add option --allow-unprivileged if this is ok"))
 			os.Exit(1)
 		}
 	}
@@ -385,7 +386,7 @@ func main() {
 	// get current path
 	confDir, err := os.Getwd()
 	if err != nil {
-		LoggerError.Fatalf("Could not get current path: %v", err)
+		LoggerError.Log(fmt.Sprintf("Could not get current path: %v", err))
 	}
 
 	// endless daemon-reload loop
@@ -393,7 +394,7 @@ func main() {
 		// change to initial directory for fetching crontabs
 		err = os.Chdir(confDir)
 		if err != nil {
-			LoggerError.Fatalf("Cannot switch to path %s: %v", confDir, err)
+			LoggerError.Log(fmt.Sprintf("Cannot switch to path %s: %v", confDir, err))
 		}
 
 		// create new cron runner
@@ -403,7 +404,7 @@ func main() {
 		// chdir to root to prevent relative path errors
 		os.Chdir("/")
 		if err != nil {
-			LoggerError.Fatalf("Cannot switch to path %s: %v", confDir, err)
+			LoggerError.Log(fmt.Sprintf("Cannot switch to path %s: %v", confDir, err))
 		}
 
 		// start new cron runner
@@ -411,9 +412,9 @@ func main() {
 
 		// check if we received SIGHUP and start a new loop
 		s := <-c
-		LoggerInfo.Println("Got signal: ", s)
+		LoggerInfo.Log(fmt.Sprintf("Got signal: ", s))
 		runner.Stop()
-		LoggerInfo.Println("Reloading configuration")
+		LoggerInfo.Log("Reloading configuration")
 	}
 }
 
@@ -422,10 +423,10 @@ func registerRunnerShutdown(runner *Runner) {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		s := <-c
-		LoggerInfo.Println("Got signal: ", s)
+		LoggerInfo.Log(fmt.Sprintf("Got signal: ", s))
 		runner.Stop()
 
-		LoggerInfo.Println("Terminated")
+		LoggerInfo.Log("Terminated")
 		os.Exit(1)
 	}()
 }
