@@ -104,7 +104,7 @@ func findFilesInPaths(pathlist []string, callback func(os.FileInfo, string)) {
 				return nil
 			})
 		} else {
-			LoggerInfo.Printf("Path %s does not exists\n", path)
+			LoggerInfo.Log(fmt.Sprintf("Path %s does not exists", path))
 		}
 	}
 }
@@ -230,7 +230,7 @@ func collectCrontabs(args []string) []CrontabEntry {
 
 				ret = append(ret, includeRunPartsDirectory(cronSpec, cronPath)...)
 			} else {
-				LoggerError.Log(fmt.Sprintf("Ignoring --run-parts because of missing time spec: %s\n", runPart))
+				LoggerError.Log(fmt.Sprintf("Ignoring --run-parts because of missing time spec: %s", runPart))
 			}
 		}
 	}

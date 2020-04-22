@@ -101,7 +101,7 @@ func (r *Runner) Len() int {
 
 // Start runner
 func (r *Runner) Start() {
-	LoggerInfo.Log(fmt.Sprintf("Start runner with %d jobs\n", r.Len()))
+	LoggerInfo.Log(fmt.Sprintf("Start runner with %d jobs", r.Len()))
 	r.cron.Start()
 }
 

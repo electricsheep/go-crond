@@ -79,10 +79,10 @@ func checkIfFileIsValid(f os.FileInfo, path string) bool {
 		if f.Mode().Perm()&0022 == 0 {
 			return true
 		} else {
-			LoggerInfo.Log(fmt.Sprintf("Ignoring file with wrong modes (not xx22) %s\n", path))
+			LoggerInfo.Log(fmt.Sprintf("Ignoring file with wrong modes (not xx22) %s", path))
 		}
 	} else {
-		LoggerInfo.Log(fmt.Sprintf("Ignoring non regular file %s\n", path))
+		LoggerInfo.Log(fmt.Sprintf("Ignoring non regular file %s", path))
 	}
 
 	return false
