@@ -60,6 +60,6 @@ func (CronLogger CronLogger) CronjobExecSuccess(cronjob CrontabEntry, output str
 }
 
 func (CronLogger CronLogger) Log(message string) {
-	var currentTime string = time.Now().Format(time.RFC3339)
+	var currentTime string = time.Now().Format(time.RFC3339Nano)
 	CronLogger.Printf("{\"Timestamp\": \"%v\", \"Level\": \"%v\", \"Message\": \"%v\"}\n", currentTime, CronLogger.level, message)
 }
